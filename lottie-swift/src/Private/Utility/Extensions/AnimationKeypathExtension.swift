@@ -42,9 +42,10 @@ extension KeypathSearchable {
         results.append(contentsOf: foundNodes)
       }
       
-      // In this case the current key is fuzzy, and both child and self have the same name. Keep digging!
+      // In this case the current key is fuzzy, and both child and self match the next keyname. Keep digging!
       if currentKey.keyPathType == .fuzzyWildcard,
-        child.keypathName == keypathName,
+        let nextKeypath = keyPath.nextKeypath,
+        nextKeypath.equalsKeypath(child.keypathName),
         let foundNodes = childNode.animatorNodes(for: keyPath) {
         results.append(contentsOf: foundNodes)
       }
@@ -90,7 +91,7 @@ extension KeypathSearchable {
   }
   
   func layer(for keyPath: AnimationKeypath) -> CALayer? {
-    if keyPath.currentKey == keypathName && keyPath.nextKeypath == nil {
+    if keyPath.nextKeypath == nil, let layerKey = keyPath.currentKey,  layerKey.equalsKeypath(keypathName) {
       /// We found our layer!
       return keypathLayer
     }
@@ -165,7 +166,8 @@ extension AnimationKeypath {
     
     if currentKey.keyPathType == .fuzzyWildcard {
       /// Dont remove if current key is a fuzzy wildcard, and if the next keypath doesnt equal keypathname
-      if nextKeypath == keyname {
+      if let nextKeypath = nextKeypath,
+        nextKeypath.equalsKeypath(keyname) {
         /// Remove next two keypaths. This keypath breaks the wildcard.
         var oldKeys = keys
         oldKeys.remove(at: 0)
@@ -213,6 +215,36 @@ extension String {
       return true
     }
     if self == keyname {
+      return true
+    }
+    if let index = self.firstIndex(of: "*") {
+      // Wildcard search.
+      let prefix = self.prefix(upTo: index)
+      let suffix = self.suffix(from: self.index(after: index))
+      
+      if prefix.count > 0 {
+        // Match prefix.
+        if keyname.count < prefix.count {
+          return false
+        }
+        let testPrefix = keyname.prefix(upTo: keyname.index(keyname.startIndex, offsetBy: prefix.count))
+        if testPrefix != prefix {
+          // Prefix doesnt match
+          return false
+        }
+      }
+      if suffix.count > 0 {
+        // Match suffix.
+        if keyname.count < suffix.count {
+          // Suffix doesnt match
+          return false
+        }
+        let index = keyname.index(keyname.endIndex, offsetBy: -suffix.count)
+        let testSuffix = keyname.suffix(from: index)
+        if testSuffix != suffix {
+          return false
+        }
+      }
       return true
     }
     return false
