@@ -61,6 +61,13 @@ public final class CompatibleAnimationView: UIView {
 
   // MARK: Public
 
+  @objc public func createAnimation(from data: NSData) {
+    let decoder = JSONDecoder()
+    let animation = try! decoder.decode(Animation.self, from: Data(referencing: data))
+    
+    self.animationView.animation = animation
+  }
+  
   @objc
   public var compatibleAnimation: CompatibleAnimation? {
     didSet {
