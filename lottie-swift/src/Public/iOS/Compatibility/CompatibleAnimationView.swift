@@ -60,6 +60,14 @@ public final class CompatibleAnimationView: UIView {
   }
 
   // MARK: Public
+  
+  @objc public let animationView: AnimationView
+  
+  @objc public func currentAnimationTime() -> Double {
+    let frame = animationView.realtimeAnimationFrame
+    let time = animationView.animation?.time(forFrame: frame);
+    return time != nil ? time! : 0.0
+  }
 
   @objc public func createAnimation(from data: NSData) {
     let decoder = JSONDecoder()
@@ -261,10 +269,9 @@ public final class CompatibleAnimationView: UIView {
 
   // MARK: Private
 
-  private let animationView: AnimationView
-
   private func commonInit() {
-    translatesAutoresizingMaskIntoConstraints = false
+    /// We can't set frame otherwise: https://github.com/airbnb/lottie-ios/issues/1091
+    translatesAutoresizingMaskIntoConstraints = true
     setUpViews()
   }
 
